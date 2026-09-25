@@ -1,6 +1,6 @@
 <?php
 
-namespace Sendary\Laravel;
+namespace Sendery\Laravel;
 
 use Illuminate\Auth\Notifications\VerifyEmail;
 

@@ -1,6 +1,6 @@
 {
-  "name": "sendary/laravel",
-  "description": "Sendary template API client and Laravel notification adapter",
+  "name": "sendery/laravel",
+  "description": "Sendery template API client and Laravel notification adapter",
   "type": "library",
   "license": "proprietary",
   "require": {
@@ -12,13 +12,13 @@
   },
   "autoload": {
     "psr-4": {
-      "Sendary\\Laravel\\": "src/"
+      "Sendery\\Laravel\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "Sendary\\Laravel\\SendaryServiceProvider"
+        "Sendery\\Laravel\\SenderyServiceProvider"
       ]
     }
   }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Sendary\Laravel;
+namespace Sendery\Laravel;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -12,7 +12,7 @@ class Client
         $scheme = parse_url($url, PHP_URL_SCHEME);
         $host = parse_url($url, PHP_URL_HOST);
         if (! $apiKey || ! $host || ($scheme !== 'https' && ! ($scheme === 'http' && in_array($host, ['localhost', '127.0.0.1', '[::1]'], true)))) {
-            throw new \InvalidArgumentException('Configure SENDARY_API_KEY and an HTTPS SENDARY_URL (HTTP allowed only on loopback).');
+            throw new \InvalidArgumentException('Configure SENDERY_API_KEY and an HTTPS SENDERY_URL (HTTP allowed only on loopback).');
         }
     }
 
