@@ -1,6 +1,6 @@
 <?php
 
-namespace Sendry\Laravel;
+namespace Sendary\Laravel;
 
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -8,7 +8,7 @@ use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 
-class Sendry
+class Sendary
 {
     /** Call once in AppServiceProvider::boot(), after installing and configuring the package. */
     public static function useBuiltInNotifications(bool $useNotificationLocale = false): void
@@ -38,7 +38,7 @@ class Sendry
                 idempotencyKey: hash('sha256', ($notification->id ?? (string) Str::uuid()).'|'.$template.'|'.$to),
             );
 
-            return false; // Cancel Laravel's mail channel only after Sendry accepts the request.
+            return false; // Cancel Laravel's mail channel only after Sendary accepts the request.
         });
     }
 }
