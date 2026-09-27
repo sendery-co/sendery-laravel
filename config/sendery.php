@@ -2,5 +2,5 @@
 
 return [
     'api_key' => env('SENDERY_API_KEY'),
-    'url' => env('SENDERY_URL', 'http://localhost:8000'),
+    'url' => env('SENDERY_URL', 'https://sendery.co'),
 ];

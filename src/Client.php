@@ -2,28 +2,23 @@
 
 namespace Sendery\Laravel;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use Sendery\ApiException;
 
-class Client
+class Client extends \Sendery\Client
 {
-    public function __construct(private string $apiKey, private string $url)
+    public function __construct(string $apiKey, string $url = 'https://sendery.co')
     {
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        $host = parse_url($url, PHP_URL_HOST);
-        if (! $apiKey || ! $host || ($scheme !== 'https' && ! ($scheme === 'http' && in_array($host, ['localhost', '127.0.0.1', '[::1]'], true)))) {
-            throw new \InvalidArgumentException('Configure SENDERY_API_KEY and an HTTPS SENDERY_URL (HTTP allowed only on loopback).');
-        }
-    }
+        parent::__construct($apiKey, $url, function (string $method, string $url, array $headers, ?string $body): array {
+            try {
+                $request = Http::withHeaders($headers)->timeout(10)->connectTimeout(3)->withoutRedirecting();
+                $response = $request->send($method, $url, $body === null ? [] : ['body' => $body]);
 
-    public function send(string $to, string $template, array $data, ?string $locale = null, ?string $idempotencyKey = null): array
-    {
-        return Http::baseUrl(rtrim($this->url, '/'))->withToken($this->apiKey)->acceptJson()
-            ->timeout(10)->connectTimeout(3)->withoutRedirecting()
-            ->withHeaders(['Idempotency-Key' => $idempotencyKey ?? (string) Str::uuid()])
-            ->post('/api/v1/emails', array_filter([
-                'to' => $to, 'template' => $template, 'data' => (object) $data, 'locale' => $locale,
-            ], fn ($value) => $value !== null))
-            ->throw()->json();
+                return ['status' => $response->status(), 'body' => $response->body(), 'retry_after' => $response->header('Retry-After') ?: null];
+            } catch (ConnectionException) {
+                throw new ApiException(0, 'connection_error');
+            }
+        });
     }
 }
