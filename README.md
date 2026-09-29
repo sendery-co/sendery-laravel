@@ -11,7 +11,7 @@ Laravel 13 and PHP 8.3+ with the cURL extension.
 ## Install
 
 ```bash
-composer require sendery/laravel:^0.1
+composer require sendery/laravel:^0.1.1
 ```
 
 ## Configure your application
@@ -26,7 +26,7 @@ MAIL_FROM_NAME="Your app"
 
 ## Send an email
 
-Use `TemplateMail` with the `sendery` mailer. It accepts one recipient and a published template. HTML mailables, attachments, and `cc` or `bcc` recipients are not supported.
+Use `TemplateMail` with the `sendery` mailer. It accepts one recipient and a published template. HTML mailables and `cc` or `bcc` recipients are not supported.
 
 ```php
 use Illuminate\Support\Facades\Mail;
@@ -38,6 +38,28 @@ Mail::mailer('sendery')->to('alex@example.com')->send(
         'action_url' => 'https://example.com/start',
     ])
 );
+```
+
+## Attachments
+
+Attach files to `TemplateMail` with Laravel’s `attachData()` method.
+
+Send up to 10 files totaling 5 MB. See the [attachment reference](https://sendery.co/en/docs/send-email#section-5) for supported formats and limits.
+
+```php
+use Illuminate\Support\Facades\Mail;
+use Sendery\Laravel\TemplateMail;
+
+$email = new TemplateMail('welcome', [
+    'name' => 'Alex',
+    'action_url' => 'https://example.com/start',
+], idempotencyKey: 'welcome-attachment-123');
+
+$email->attachData(file_get_contents('/path/document.pdf'), 'document.pdf', [
+    'mime' => 'application/pdf',
+]);
+
+Mail::mailer('sendery')->to('alex@example.com')->send($email);
 ```
 
 ## Queue an email
@@ -72,7 +94,7 @@ public function boot(): void
 
 ## Custom notifications
 
-Return `SenderyChannel::class` from `via()` and define `toSendery()`. Pass the original event key and variables when creating this notification. You can also return `locale` to [select a published language](https://sendery.co/en/docs/languages). The notifiable must route mail to one email address.
+Return `SenderyChannel::class` from `via()` and define `toSendery()`. Pass the original event key and variables when creating this notification. You can also return `locale` to [select a published language](https://sendery.co/en/docs/languages). The notifiable must route mail to one email address. Return an `attachments` array of `Sendery\Attachment` objects from `toSendery()` to attach files.
 
 ```php
 use Illuminate\Notifications\Notification;

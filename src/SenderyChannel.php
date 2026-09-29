@@ -19,6 +19,6 @@ class SenderyChannel
         $notification->id ??= (string) Str::uuid();
 
         return $this->client->send($recipient, $data['template'], $data['data'], $data['locale'] ?? null,
-            $data['idempotency_key'] ?? hash('sha256', $notification->id.'|'.$data['template'].'|'.$recipient));
+            $data['idempotency_key'] ?? hash('sha256', $notification->id.'|'.$data['template'].'|'.$recipient), $data['attachments'] ?? []);
     }
 }
