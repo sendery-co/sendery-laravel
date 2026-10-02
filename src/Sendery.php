@@ -11,9 +11,12 @@ use Illuminate\Support\Str;
 class Sendery
 {
     /** Call once in AppServiceProvider::boot(), after installing and configuring the package. */
-    public static function useBuiltInNotifications(bool $useNotificationLocale = false): void
-    {
-        Event::listen(NotificationSending::class, function (NotificationSending $event) use ($useNotificationLocale) {
+    public static function useBuiltInNotifications(
+        bool $useNotificationLocale = false,
+        string $passwordResetTemplate = 'password-reset',
+        string $emailVerificationTemplate = 'email-verification',
+    ): void {
+        Event::listen(NotificationSending::class, function (NotificationSending $event) use ($useNotificationLocale, $passwordResetTemplate, $emailVerificationTemplate) {
             if ($event->channel !== 'mail') {
                 return null;
             }
@@ -21,11 +24,11 @@ class Sendery
             // Custom notification subclasses may have different semantics; leave them alone.
             if (get_class($notification) === ResetPassword::class) {
                 $url = (new ResetPasswordUrl($notification->token))->actionUrl($event->notifiable);
-                $template = 'password-reset';
+                $template = $passwordResetTemplate;
                 $to = $event->notifiable->getEmailForPasswordReset();
             } elseif (get_class($notification) === VerifyEmail::class) {
                 $url = (new VerifyEmailUrl)->actionUrl($event->notifiable);
-                $template = 'email-verification';
+                $template = $emailVerificationTemplate;
                 $to = $event->notifiable->getEmailForVerification();
             } else {
                 return null;

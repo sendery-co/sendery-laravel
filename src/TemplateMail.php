@@ -12,6 +12,8 @@ class TemplateMail extends Mailable
 
     private string $variablesJson;
 
+    private ?int $templateVersion = null;
+
     public readonly string $idempotencyKey;
 
     public function __construct(private string $templateKey, array $variables, private ?string $language = null, ?string $idempotencyKey = null)
@@ -20,15 +22,28 @@ class TemplateMail extends Mailable
         $this->idempotencyKey = $idempotencyKey ?? bin2hex(random_bytes(16));
     }
 
+    public function version(int $version): static
+    {
+        if ($version < 1) {
+            throw new \InvalidArgumentException('Version must be a positive integer.');
+        }
+        $this->templateVersion = $version;
+
+        return $this;
+    }
+
     public function build(): static
     {
         return $this->html(' ')->withSymfonyMessage(function (Email $message): void {
-            foreach (['X-Sendery-Template', 'X-Sendery-Data', 'X-Sendery-Locale', 'X-Sendery-Key'] as $name) {
+            foreach (['X-Sendery-Template', 'X-Sendery-Data', 'X-Sendery-Locale', 'X-Sendery-Key', 'X-Sendery-Version'] as $name) {
                 $message->getHeaders()->remove($name);
             }
             $message->getHeaders()->addTextHeader('X-Sendery-Template', $this->templateKey);
             $message->getHeaders()->addTextHeader('X-Sendery-Data', base64_encode($this->variablesJson));
             $message->getHeaders()->addTextHeader('X-Sendery-Key', $this->idempotencyKey);
+            if ($this->templateVersion !== null) {
+                $message->getHeaders()->addTextHeader('X-Sendery-Version', (string) $this->templateVersion);
+            }
             if ($this->language !== null) {
                 $message->getHeaders()->addTextHeader('X-Sendery-Locale', $this->language);
             }

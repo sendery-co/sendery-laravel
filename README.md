@@ -16,9 +16,9 @@ composer require sendery/laravel:^0.1.1
 
 ## Configure your application
 
-Publish a `welcome` template with `name` and `action_url` variables, and create a [project API key](https://sendery.co/en/docs/authentication). Store it as `SENDERY_API_KEY` on your server. Add these values to `.env`. The package registers the `sendery` mailer automatically. `MAIL_FROM_ADDRESS` is required by Laravel; the actual sender comes from your Sendery project.
+Create a [project API key](https://sendery.co/en/docs/authentication) and add these values to `.env`. The `sendery` mailer is ready to use after installation. Set `MAIL_FROM_ADDRESS` to your project’s sender address.
 
-```dotenv
+```bash
 SENDERY_API_KEY=your_project_api_key
 MAIL_FROM_ADDRESS=hello@your-domain.com
 MAIL_FROM_NAME="Your app"
@@ -26,34 +26,50 @@ MAIL_FROM_NAME="Your app"
 
 ## Send an email
 
-Use `TemplateMail` with the `sendery` mailer. It accepts one recipient and a published template. HTML mailables and `cc` or `bcc` recipients are not supported.
+Send a published template with `TemplateMail`. Replace `your-template` with your published template’s key and `data` with its variables. Set the sender in your Sendery project.
 
 ```php
 use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
 Mail::mailer('sendery')->to('alex@example.com')->send(
-    new TemplateMail('welcome', [
+    new TemplateMail('your-template', [
         'name' => 'Alex',
         'action_url' => 'https://example.com/start',
     ])
 );
 ```
 
-## Attachments
+## Send a specific version
 
-Attach files to `TemplateMail` with Laravel’s `attachData()` method.
-
-Send up to 10 files totaling 5 MB. See the [attachment reference](https://sendery.co/en/docs/send-email#section-5) for supported formats and limits.
+Choose a [published template version](https://sendery.co/en/docs/send-email#section-5) to keep sending it after newer versions are published. By default, Sendery uses the latest version.
 
 ```php
 use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
-$email = new TemplateMail('welcome', [
+$email = (new TemplateMail('your-template', [
     'name' => 'Alex',
     'action_url' => 'https://example.com/start',
-], idempotencyKey: 'welcome-attachment-123');
+]))->version(3);
+
+Mail::mailer('sendery')->to('alex@example.com')->send($email);
+```
+
+## Attachments
+
+Attach files to `TemplateMail` with Laravel’s `attachData()` method.
+
+Send up to 10 files totaling 5 MB. See the [attachment reference](https://sendery.co/en/docs/send-email#section-6) for supported formats and limits.
+
+```php
+use Illuminate\Support\Facades\Mail;
+use Sendery\Laravel\TemplateMail;
+
+$email = new TemplateMail('your-template', [
+    'name' => 'Alex',
+    'action_url' => 'https://example.com/start',
+], idempotencyKey: 'your-idempotency-key');
 
 $email->attachData(file_get_contents('/path/document.pdf'), 'document.pdf', [
     'mime' => 'application/pdf',
@@ -64,14 +80,14 @@ Mail::mailer('sendery')->to('alex@example.com')->send($email);
 
 ## Queue an email
 
-Use `queue()` in place of `send()`. Configure your Laravel queue connection and run a worker. A [retry of the same queued mailable](https://sendery.co/en/docs/queues) keeps its key and template data.
+Use `queue()` to send in the background. With a Laravel queue worker running, failed jobs can [retry the same email safely](https://sendery.co/en/docs/queues).
 
 ```php
 use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
 Mail::mailer('sendery')->to('alex@example.com')->queue(
-    new TemplateMail('welcome', [
+    new TemplateMail('your-template', [
         'name' => 'Alex',
         'action_url' => 'https://example.com/start',
     ])
@@ -80,7 +96,9 @@ Mail::mailer('sendery')->to('alex@example.com')->queue(
 
 ## Password resets and verification
 
-Publish `password-reset` and `email-verification` templates with `name` and `action_url`. Add the call below to `AppServiceProvider::boot()` to send Laravel’s standard reset and verification notifications through Sendery. Custom notification subclasses are unaffected. Templates use their default language; pass `useNotificationLocale: true` to select the notification language, and publish each language you use.
+Choose a published template for each email, then add this to `AppServiceProvider::boot()`. Laravel supplies `name` and `action_url`, so use `{{ action_url }}` for the link in your templates.
+
+To send in the notification’s language, add `useNotificationLocale: true` and [publish the translations](https://sendery.co/en/docs/languages).
 
 ```php
 // app/Providers/AppServiceProvider.php
@@ -88,23 +106,26 @@ use Sendery\Laravel\Sendery;
 
 public function boot(): void
 {
-    Sendery::useBuiltInNotifications();
+    Sendery::useBuiltInNotifications(
+        passwordResetTemplate: 'your-reset-template',
+        emailVerificationTemplate: 'your-verification-template',
+    );
 }
 ```
 
 ## Custom notifications
 
-Return `SenderyChannel::class` from `via()` and define `toSendery()`. Pass the original event key and variables when creating this notification. You can also return `locale` to [select a published language](https://sendery.co/en/docs/languages). The notifiable must route mail to one email address. Return an `attachments` array of `Sendery\Attachment` objects from `toSendery()` to attach files.
+Use `SenderyChannel` to send from a Laravel notification. Return the template key and its variables from `toSendery()`.
 
 ```php
 use Illuminate\Notifications\Notification;
 use Sendery\Laravel\SenderyChannel;
 
-class OrderConfirmation extends Notification
+class TemplateNotification extends Notification
 {
     public function __construct(
-        private string $eventKey,
-        private array $variables,
+        public string $template,
+        public array $data,
     ) {}
 
     public function via(object $notifiable): array
@@ -114,22 +135,20 @@ class OrderConfirmation extends Notification
 
     public function toSendery(object $notifiable): array
     {
-        return [
-            'template' => 'order-confirmation',
-            'data' => $this->variables,
-            'idempotency_key' => $this->eventKey,
-        ];
+        return ['template' => $this->template, 'data' => $this->data];
     }
 }
+
+$user->notify(new TemplateNotification('your-template', ['name' => 'Alex']));
 ```
 
 ## Handle failures
 
-The mailer throws Symfony’s `TransportException`; its previous exception is `Sendery\ApiException` for API failures. The notification channel throws `Sendery\ApiException` directly. Neither adds automatic retries. [Retry temporary failures with the original key and data](https://sendery.co/en/docs/idempotency).
+A failed send throws an exception. Use [queue retries](https://sendery.co/en/docs/queues) for timeouts and temporary failures. Fix [API key, template, or billing errors](https://sendery.co/en/docs/errors) before trying again.
 
 ## More
 
-See [idempotency and retries](https://sendery.co/en/docs/idempotency) for retry conditions, delays, and reusing a key across attempts.
+Learn how to [retry emails without duplicate sends](https://sendery.co/en/docs/idempotency).
 
 ## License
 

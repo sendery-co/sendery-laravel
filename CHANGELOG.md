@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Choose template keys for built-in password-reset and email-verification notifications.
+- Optionally pin sends to a published template version.
+
 ## 0.1.3
 
 - See the GitHub release notes for this version.

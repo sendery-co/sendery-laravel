@@ -30,11 +30,11 @@ class LaravelTransportTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['https://sendery.example/*' => Http::response(['id' => 'email-one', 'status' => 'queued'], 202)]);
         $data = ['name' => 'Original'];
-        $mail = (new TemplateMail('welcome', $data))->attachData("PDF\x00bytes", 'invoice.pdf', ['mime' => 'application/pdf']);
+        $mail = (new TemplateMail('welcome', $data))->version(3)->attachData("PDF\x00bytes", 'invoice.pdf', ['mime' => 'application/pdf']);
         $data['name'] = 'Changed';
         $restored = unserialize(serialize($mail));
         Mail::mailer('sendery')->to('alex@example.com')->send($restored);
-        Http::assertSent(fn ($request) => $request['attachments'][0]['content'] === base64_encode("PDF\x00bytes") && $request['data']['name'] === 'Original' && $request['to'] === 'alex@example.com' && $request->hasHeader('Idempotency-Key', $mail->idempotencyKey));
+        Http::assertSent(fn ($request) => $request['attachments'][0]['content'] === base64_encode("PDF\x00bytes") && $request['version'] === 3 && $request['data']['name'] === 'Original' && $request['to'] === 'alex@example.com' && $request->hasHeader('Idempotency-Key', $mail->idempotencyKey));
     }
 
     public function test_notification_channel_forwards_attachments(): void
@@ -52,11 +52,11 @@ class LaravelTransportTest extends TestCase
         {
             public function toSendery(object $notifiable): array
             {
-                return ['template' => 'invoice', 'data' => [], 'attachments' => [new Attachment('invoice.pdf', "PDF\x00bytes", 'application/pdf')]];
+                return ['template' => 'invoice', 'data' => [], 'version' => 2, 'attachments' => [new Attachment('invoice.pdf', "PDF\x00bytes", 'application/pdf')]];
             }
         };
         $channel = new SenderyChannel(new Client('test-key', 'https://sendery.example'));
         $channel->send($notifiable, $notification);
-        Http::assertSent(fn ($request) => $request['attachments'][0]['content'] === base64_encode("PDF\x00bytes"));
+        Http::assertSent(fn ($request) => $request['version'] === 2 && $request['attachments'][0]['content'] === base64_encode("PDF\x00bytes"));
     }
 }
