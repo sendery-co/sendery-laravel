@@ -5,8 +5,8 @@
   "license": "MIT",
   "require": {
     "php": "^8.3",
-    "sendery/php": "^0.1.5",
-    "sendery/symfony": "^0.1.5",
+    "sendery/php": "^0.1.6",
+    "sendery/symfony": "^0.1.6",
     "illuminate/http": "^13.0",
     "illuminate/support": "^13.0",
     "illuminate/mail": "^13.0",
