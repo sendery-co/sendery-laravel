@@ -32,9 +32,9 @@ Send a published template with `TemplateMail`. Replace `your-template` with your
 use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
-Mail::mailer('sendery')->to('alex@example.com')->send(
+Mail::mailer('sendery')->to('steven@example.com')->send(
     new TemplateMail('your-template', [
-        'name' => 'Alex',
+        'name' => 'Steven',
         'action_url' => 'https://example.com/start',
     ])
 );
@@ -49,11 +49,11 @@ use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
 $email = (new TemplateMail('your-template', [
-    'name' => 'Alex',
+    'name' => 'Steven',
     'action_url' => 'https://example.com/start',
 ]))->version(3);
 
-Mail::mailer('sendery')->to('alex@example.com')->send($email);
+Mail::mailer('sendery')->to('steven@example.com')->send($email);
 ```
 
 ## Attachments
@@ -67,7 +67,7 @@ use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
 $email = new TemplateMail('your-template', [
-    'name' => 'Alex',
+    'name' => 'Steven',
     'action_url' => 'https://example.com/start',
 ], idempotencyKey: 'your-idempotency-key');
 
@@ -75,7 +75,7 @@ $email->attachData(file_get_contents('/path/document.pdf'), 'document.pdf', [
     'mime' => 'application/pdf',
 ]);
 
-Mail::mailer('sendery')->to('alex@example.com')->send($email);
+Mail::mailer('sendery')->to('steven@example.com')->send($email);
 ```
 
 ## Queue an email
@@ -86,9 +86,9 @@ Use `queue()` to send in the background. With a Laravel queue worker running, fa
 use Illuminate\Support\Facades\Mail;
 use Sendery\Laravel\TemplateMail;
 
-Mail::mailer('sendery')->to('alex@example.com')->queue(
+Mail::mailer('sendery')->to('steven@example.com')->queue(
     new TemplateMail('your-template', [
-        'name' => 'Alex',
+        'name' => 'Steven',
         'action_url' => 'https://example.com/start',
     ])
 );
@@ -139,7 +139,7 @@ class TemplateNotification extends Notification
     }
 }
 
-$user->notify(new TemplateNotification('your-template', ['name' => 'Alex']));
+$user->notify(new TemplateNotification('your-template', ['name' => 'Steven']));
 ```
 
 ## Handle failures
@@ -166,7 +166,7 @@ $receipt = app(\Sendery\Laravel\Client::class)
         name: 'account.created',
         objectType: 'account',
         objectId: '842',
-        data: ['email' => 'alex@example.com', 'name' => 'Alex'],
+        data: ['email' => 'steven@example.com', 'name' => 'Steven'],
     )->retry()->send();
 ```
 

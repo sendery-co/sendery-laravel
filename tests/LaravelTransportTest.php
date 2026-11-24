@@ -33,8 +33,8 @@ class LaravelTransportTest extends TestCase
         $mail = (new TemplateMail('welcome', $data))->version(3)->attachData("PDF\x00bytes", 'invoice.pdf', ['mime' => 'application/pdf']);
         $data['name'] = 'Changed';
         $restored = unserialize(serialize($mail));
-        Mail::mailer('sendery')->to('alex@example.com')->send($restored);
-        Http::assertSent(fn ($request) => $request['attachments'][0]['content'] === base64_encode("PDF\x00bytes") && $request['version'] === 3 && $request['data']['name'] === 'Original' && $request['to'] === 'alex@example.com' && $request->hasHeader('Idempotency-Key', $mail->idempotencyKey));
+        Mail::mailer('sendery')->to('steven@example.com')->send($restored);
+        Http::assertSent(fn ($request) => $request['attachments'][0]['content'] === base64_encode("PDF\x00bytes") && $request['version'] === 3 && $request['data']['name'] === 'Original' && $request['to'] === 'steven@example.com' && $request->hasHeader('Idempotency-Key', $mail->idempotencyKey));
     }
 
     public function test_notification_channel_forwards_attachments(): void
@@ -45,7 +45,7 @@ class LaravelTransportTest extends TestCase
         {
             public function routeNotificationFor(string $channel, $notification): string
             {
-                return 'alex@example.com';
+                return 'steven@example.com';
             }
         };
         $notification = new class extends Notification
