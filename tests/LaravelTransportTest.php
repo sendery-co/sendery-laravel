@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Orchestra\Testbench\TestCase;
 use Sendery\ApiException;
 use Sendery\Attachment;
+use Sendery\Laravel\Client;
 use Sendery\Laravel\Sendery;
 use Sendery\Laravel\SenderyChannel;
 use Sendery\Laravel\SenderyServiceProvider;
@@ -30,6 +31,14 @@ class LaravelTransportTest extends TestCase
         $app['config']->set('mail.default', 'sendery');
         $app['config']->set('mail.mailers.array', ['transport' => 'array']);
         $app['config']->set('mail.from', ['address' => 'hello@example.com', 'name' => 'Example']);
+    }
+
+    public function test_events_pass_language_and_declared_email_data_through_the_configured_client(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake(['https://sendery.example/api/v1/events' => Http::response(['id' => 'event', 'status' => 'accepted'], 202)]);
+        app(Client::class)->event(name: 'account.created', objectType: 'account', objectId: '42', data: ['email' => 'user@example.com'], language: 'ja')->send();
+        Http::assertSent(fn ($request) => $request['language'] === 'ja' && $request['data']['email'] === 'user@example.com');
     }
 
     public function test_default_mailer_and_explicit_mailer_are_respected(): void
