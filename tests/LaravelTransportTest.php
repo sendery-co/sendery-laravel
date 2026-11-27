@@ -46,7 +46,7 @@ class LaravelTransportTest extends TestCase
         Http::preventStrayRequests();
         Http::fake([
             'https://sendery.example/api/v1/emails/render' => Http::response(['subject' => 'Hello', 'html' => '<p>Hello</p>', 'text' => 'Hello']),
-            'https://sendery.example/api/v1/emails' => Http::response(['id' => 'mail', 'status' => 'queued', 'sandbox_url' => 'https://sendery.example/activity/mail'], 202),
+            'https://sendery.example/api/v1/emails' => Http::response(['id' => 'mail', 'status' => 'queued', 'sandbox_url' => 'https://sendery.example/email-history/mail'], 202),
         ]);
         config(['mail.default' => 'array']);
         $mail = (new TemplateMail('welcome', ['name' => 'Secret'], 'ja'))->version(2)->attachData('PDF', 'invoice.pdf');
